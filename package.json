@@ -1,0 +1,16 @@
+{
+  "name": "complexproject",
+  "version": "1.0.0",
+  "description": "a backend by jeet ",
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "license": "ISC",
+  "author": "Jeet Mandal",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
