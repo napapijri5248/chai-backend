@@ -17,8 +17,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // ---------------------------------------------
     // step 1 :get user details from frontend/req.body
+    // console.log(req.body);
+    
     const { username, email, fullName, password } = req.body
-    console.log('email : ', email);
+    // console.log('email : ', email);
     // res.json({
     //     message:"ok done"
     // })
@@ -34,7 +36,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // -----------------------------------------------
 
     //step 3- check if user already exist(email,username)
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username }, { email }]
     })
     if (existedUser) {
@@ -42,26 +44,37 @@ const registerUser = asyncHandler(async (req, res) => {
     }
     // --------------------------------------------------
     // step 4 -check for images, avatar
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
-    if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file is required")
+    // console.log(req.files);
+    
+    // const avatarLocalPath = req.files?.avatar[0]?.path;
+    let avatarLocalPath ;
+    if(req.files && Array.isArray(req.files.avatar) && req.files.avatar.length>0){
+        avatarLocalPath=req.files.avatar[0].path
+    }else{
+        throw new ApiError(400, "Avatar file is required-localpath check")
     }
+    let coverImageLocalPath ;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length>0){
+        coverImageLocalPath=req.files.coverImage[0].path
+    }
+
+    // if (!avatarLocalPath) {
+    //     throw new ApiError(400, "Avatar file is required-localpath check")
+    // }
     // --------------------------------------------
     // step 5- upload on cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     if (!avatar) {
-        throw new ApiError(400, "Avatar file is required")
+        throw new ApiError(400, "Avatar file is required-cloudinary check")
     }
 
     // ---------------------------------------------
     // step 6 - create user object and create entry into database
 
     const user = await User.create({
-        username: username.toLowerCase(),
+        username: username,
         email,
         password,
         fullName,
@@ -82,8 +95,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // ----------------------------------------------------
     // step 9 - return response
-    res.status(201).json(
-        new ApiResponse(200, createdUser,"User registered successfullly")
+    return res.status(201).json(
+        new ApiResponse(200, createdUser,"User registered successfully")
     )
 })
 
