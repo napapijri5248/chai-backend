@@ -9,6 +9,8 @@ import jwt from "jsonwebtoken"
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId)
+        
+        if(!user) throw new ApiError(404,"User not found")
 
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
@@ -20,6 +22,8 @@ const generateAccessAndRefreshTokens = async (userId) => {
         return { accessToken, refreshToken }
 
     } catch (error) {
+        if(error instanceof ApiError) throw error
+        
         throw new ApiError(500, "Something went wrong while generating access and refresh tokens")
     }
 }
@@ -220,35 +224,35 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         )
-    
-        const user=await User.findById(decodedToken?._id)
-    
-        if(!user){
-            throw new ApiError(401,"Invalid Refresh Token")
+
+        const user = await User.findById(decodedToken?._id)
+
+        if (!user) {
+            throw new ApiError(401, "Invalid Refresh Token")
         }
-    
-        if(incomingRefreshToken!=user?.refreshToken){
-            throw new ApiError(401,"Refresh Token is expired or used")
+
+        if (incomingRefreshToken != user?.refreshToken) {
+            throw new ApiError(401, "Refresh Token is expired or used")
         }
-    
-        const options={
-            httpOnly:true,
-            secure:true
+
+        const options = {
+            httpOnly: true,
+            secure: true
         }
-    
+
         const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id)
-    
+
         return res
             .status(200)
-            .cookie("accessToken",accessToken, options)
-            .cookie("refreshToken",newRefreshToken, options)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
             .json(new ApiResponse(
                 200,
-                {accessToken, refreshToken:newRefreshToken},
+                { accessToken, refreshToken: newRefreshToken },
                 "Access token refreshed successfully"
             ))
     } catch (error) {
-        throw new ApiError(401,error?.message ||"Invalid Refresh Token")
+        throw new ApiError(401, error?.message || "Invalid Refresh Token")
     }
 
 })
